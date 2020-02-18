@@ -14,11 +14,11 @@ jobs:
         with:
           java-version: 1.8
       - name: Create gpg
-          id: write_file
-          uses: timheuer/base64-to-file@v1.0.3
-          with:
-            fileName: ${{ secrets.KEY_FILE_PATH }}
-            encodedString: ${{ secrets.KEY_FILE }}
+        id: write_file
+        uses: timheuer/base64-to-file@v1.0.3
+        with:
+          fileName: ${{ secrets.KEY_FILE_PATH }}
+          encodedString: ${{ secrets.KEY_FILE }}
       - name: Build with Gradle
         run: ./gradlew library:uploadArchives --no-daemon
         env:
