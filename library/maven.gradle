@@ -29,6 +29,18 @@ def getRepositoryPassword() {
     return hasProperty('NEXUS_PASSWORD') ? NEXUS_PASSWORD : ""
 }
 
+ext.isGithubCI = {
+    (System.env.GITHUB_ACTIONS ?: false) as boolean
+}
+
+if (isGithubCI) {
+    ext["signing.keyId"] = System.getenv('KEY_KEY_ID')
+    ext["signing.password"] = System.getenv('KEY_KEY_PASSWORD')
+    ext["signing.secretKeyRingFile"] = System.getenv('KEY_KEY_FILE_PATH')
+    ext["NEXUS_USERNAME"] = System.getenv('KEY_NEXUS_USERNAME')
+    ext["NEXUS_PASSWORD"] = System.getenv('KEY_NEXUS_PASSWORD')
+}
+
 afterEvaluate { project ->
     uploadArchives {
         repositories {
