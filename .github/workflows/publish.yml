@@ -1,6 +1,9 @@
 name: build
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -28,7 +31,7 @@ jobs:
           KEY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_KEY_FILE_PATH: ${{ secrets.KEY_FILE_PATH }}
       - name: Close And Release
-        run: ./gradlew closeRepository --no-daemon
+        run: ./gradlew closeAndReleaseRepository --no-daemon
         env:
           KEY_NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           KEY_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
