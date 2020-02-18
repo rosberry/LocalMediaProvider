@@ -17,7 +17,7 @@ jobs:
         id: write_file
         uses: timheuer/base64-to-file@v1.0.3
         with:
-          fileName: 'secring.gpg'
+          fileName: ${{ secrets.KEY_FILE_PATH }}
           encodedString: ${{ secrets.KEY_FILE }}
       - name: Build with Gradle
         run: ./gradlew library:uploadArchives --no-daemon
@@ -27,4 +27,11 @@ jobs:
           KEY_KEY_ID: ${{ secrets.KEY_ID }}
           KEY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_KEY_FILE_PATH: ${{ secrets.KEY_FILE_PATH }}
-          KEY_KEY_FILE: ${{ secrets.KEY_FILE }}
+      - name: Close And Release
+        run: ./gradlew closeRepository --no-daemon
+        env:
+          KEY_NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          KEY_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          KEY_KEY_ID: ${{ secrets.KEY_ID }}
+          KEY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_KEY_FILE_PATH: ${{ secrets.KEY_FILE_PATH }}
