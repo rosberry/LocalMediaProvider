@@ -36,7 +36,7 @@ ext.isGithubCI = {
 if (isGithubCI) {
     ext["signing.keyId"] = System.getenv('KEY_KEY_ID')
     ext["signing.password"] = System.getenv('KEY_KEY_PASSWORD')
-    ext["signing.secretKeyRingFile"] = 'secring.gpg'
+    ext["signing.secretKeyRingFile"] = '../secring.gpg'
     ext["NEXUS_USERNAME"] = System.getenv('KEY_NEXUS_USERNAME')
     ext["NEXUS_PASSWORD"] = System.getenv('KEY_NEXUS_PASSWORD')
 }
