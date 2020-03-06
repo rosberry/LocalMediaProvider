@@ -1,8 +1,46 @@
 # Local Media Provider (by Rosberry)
 
+The library is providing an easy way to fetch media files (photo and video) from media storage.
+
+## Usage
+
+### Add a dependency
+
 ```groovy
 implementation "com.rosberry.android.localmediaprovider:$localprovider_version"
 ```
+
+### Quary a files
+
+```kotlin
+val disposable = MediaProvider(context).getLocalMedia(
+    folderId = NO_FOLDER_ID,
+    limit = NO_LIMIT,
+    filterMode = FilterMode.ALL,
+    sortingMode = SortingMode.DATE,
+    sortingOrder = SortingOrder.DESCENDING
+)
+    .subscribeOn(Schedulers.io())
+    .observeOn(AndroidSchedulers.mainThread())
+    .subscribe { mediaList: List<LocalMedia> -> //work with data }
+```
+
+For query a files use the `getLocalMedia` method, which return a `Single<List<LocalMedia>>`. By an arguments you can customize your query:
+
+ - folderId - id of the folder in which to query (default is `NO_FOLDER_ID`)
+ - limit - limit of the auery (default is `NO_LIMIT`)
+ - filterMode - can be `ALL`, `VIDEO` or `IMAGE`
+ - sortingMode - can be `NAME`, `DATE`, `SIZE`, `TYPE` or `NUMERIC`
+ - sortingOrder - can be `ASCENDING` or `DESCENDING`
+ 
+ ### Listen media updates
+ 
+ ```kotlin
+ val disposable = MediaProvider(context).listenMediaUpdates()
+     .subscribe { isUpdated: Boolean -> //do what you need when media was updated. }
+ ```
+⚠️ **Attention** 
+`Observable` from `listenMediaUpdates` is publishing the events on the main thread.
 
 ## License
 
