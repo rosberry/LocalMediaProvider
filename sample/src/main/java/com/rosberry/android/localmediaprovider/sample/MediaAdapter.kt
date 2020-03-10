@@ -6,6 +6,7 @@
 
 package com.rosberry.android.localmediaprovider.sample
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -47,6 +48,10 @@ class MediaViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
     fun bind(item: LocalMedia) {
         itemView.textType.text = item.mimeType
-        itemView.imageMedia.setImageURI(item.uri)
+        if (item.mimeType == "image/jpeg") {
+            itemView.imageMedia.setImageURI(item.uri)
+        } else {
+            itemView.imageMedia.setBackgroundColor(Color.DKGRAY)
+        }
     }
 }

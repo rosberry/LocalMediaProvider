@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.tabs.TabLayout
+import com.rosberry.android.localmediaprovider.FilterMode
 import com.rosberry.android.localmediaprovider.MediaProvider
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -79,14 +80,18 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
             }
 
             override fun onTabSelected(tab: TabLayout.Tab) {
-                Log.d(tag, "${tab.text} was selected")
+                when (tab.text) {
+                    "ALL" -> loadData()
+                    "IMAGE" -> loadData(filterMode = FilterMode.IMAGES)
+                    "VIDEO" -> loadData(filterMode = FilterMode.VIDEO)
+                }
             }
         })
     }
 
-    private fun loadData() {
+    private fun loadData(filterMode: FilterMode = FilterMode.ALL) {
         if (isReadStoragePermissionsGranted()) {
-            mediaProvider.getLocalMedia()
+            mediaProvider.getLocalMedia(filterMode = filterMode)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
