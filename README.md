@@ -10,7 +10,7 @@ The library is providing an easy way to fetch media files (photo and video) from
 implementation "com.rosberry.android.localmediaprovider:$localprovider_version"
 ```
 
-### Quary a files
+### Quary files
 
 ```kotlin
 val disposable = MediaProvider(context).getLocalMedia(
@@ -25,7 +25,7 @@ val disposable = MediaProvider(context).getLocalMedia(
     .subscribe { mediaList: List<LocalMedia> -> //work with data }
 ```
 
-For query a files use the `getLocalMedia` method, which return a `Single<List<LocalMedia>>`. By an arguments you can customize your query:
+For query files use the `getLocalMedia` method, which return a `Single<List<LocalMedia>>`. By an arguments you can customize your query:
 
  - folderId - id of the folder in which to query (default is `NO_FOLDER_ID`)
  - limit - limit of the auery (default is `NO_LIMIT`)
