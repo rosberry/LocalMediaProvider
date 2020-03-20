@@ -5,4 +5,5 @@
  */
 
 include ':library'
+include ':sample'
 rootProject.name='Local Media Provider'
