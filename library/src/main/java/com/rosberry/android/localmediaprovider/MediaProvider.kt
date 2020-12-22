@@ -37,8 +37,8 @@ class MediaProvider(private val context: Context) {
             sortingOrder: SortingOrder = SortingOrder.DESCENDING
     ): Single<List<LocalMedia>> {
 
-        val finalFolderId = if (folderId.isValid()) folderId else NO_FOLDER_ID
-        val finalLimit = if (limit.isValid()) limit else NO_LIMIT
+        val finalFolderId = if (folderId > NO_FOLDER_ID) folderId else NO_FOLDER_ID
+        val finalLimit = if (limit > NO_LIMIT) limit else NO_LIMIT
 
         return queryFromMediaStore(finalFolderId, finalLimit, sortingMode, sortingOrder, filterMode)
     }
@@ -81,65 +81,6 @@ class MediaProvider(private val context: Context) {
         return query.queryResults(context.contentResolver,
                 CursorHandler { LocalMedia(it) })
     }
-
-    private fun FilterMode.selection(folderId: Long): String =
-            when (this) {
-                FilterMode.ALL -> {
-                    if (folderId.isValid()) {
-                        String.format("(%s=? or %s=?) and %s=?",
-                                MediaStore.Files.FileColumns.MEDIA_TYPE,
-                                MediaStore.Files.FileColumns.MEDIA_TYPE,
-                                MediaStore.Files.FileColumns.PARENT)
-                    } else {
-                        String.format("%s=? or %s=?",
-                                MediaStore.Files.FileColumns.MEDIA_TYPE,
-                                MediaStore.Files.FileColumns.MEDIA_TYPE)
-                    }
-                }
-                else -> {
-                    if (folderId.isValid()) {
-                        String.format("%s=? and %s=?",
-                                MediaStore.Files.FileColumns.MEDIA_TYPE,
-                                MediaStore.Files.FileColumns.PARENT)
-                    } else {
-                        String.format("%s=?", MediaStore.Files.FileColumns.MEDIA_TYPE)
-                    }
-                }
-            }
-
-    private fun FilterMode.args(folderId: Long): Array<Any> =
-            when (this) {
-                FilterMode.ALL -> {
-                    if (folderId.isValid()) {
-                        arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE,
-                                MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO,
-                                folderId)
-                    } else {
-                        arrayOf<Any>(
-                                MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE,
-                                MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
-                        )
-                    }
-                }
-                FilterMode.IMAGES -> {
-                    if (folderId.isValid()) {
-                        arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE, folderId)
-                    } else {
-                        arrayOf<Any>(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE)
-                    }
-                }
-                FilterMode.VIDEO -> {
-                    if (folderId.isValid()) {
-                        arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO, folderId)
-                    } else {
-                        arrayOf<Any>(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)
-                    }
-                }
-            }
-
-    private fun Long.isValid(): Boolean = this > NO_FOLDER_ID
-
-    private fun Int.isValid(): Boolean = this > NO_LIMIT
 
     private fun <T> Query.queryResults(cr: ContentResolver, ch: CursorHandler<T>): Single<List<T>> =
             Single.create { emitter ->
