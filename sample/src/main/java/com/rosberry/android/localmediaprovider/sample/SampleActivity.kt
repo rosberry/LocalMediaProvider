@@ -15,7 +15,10 @@ import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.tabs.TabLayout
 import com.rosberry.android.localmediaprovider.FilterMode
+import com.rosberry.android.localmediaprovider.LocalMedia
 import com.rosberry.android.localmediaprovider.MediaProvider
+import com.rosberry.android.localmediaprovider.MediaUpdatesCallback
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
@@ -41,9 +44,13 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private val adapter by lazy { MediaAdapter(cellWidth) }
 
-    private val mediaProvider: MediaProvider by lazy {
-        MediaProvider(this)
-    }
+    private val callback by lazy { object : MediaUpdatesCallback {
+        override fun onChange(selfChange: Boolean) {
+            
+        }
+    } }
+
+    private val mediaProvider: MediaProvider by lazy { MediaProvider(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,9 +98,11 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private fun loadData(filterMode: FilterMode = FilterMode.ALL) {
         if (isReadStoragePermissionsGranted()) {
-            mediaProvider.getLocalMedia(filterMode = filterMode)
+            Single.fromCallable<List<LocalMedia>> { mediaProvider.getLocalMedia(filterMode = filterMode) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe { mediaProvider.registerMediaUpdatesCallback(callback) }
+                .doOnDispose { mediaProvider.unregisterMediaUpdatesCallback() }
                 .subscribe(
                         { mediaList -> adapter.showItems(mediaList) },
                         { error -> error.printStackTrace() }

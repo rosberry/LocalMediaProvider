@@ -16,16 +16,13 @@ import com.rosberry.android.localmediaprovider.Constant.NO_FOLDER_ID
 import com.rosberry.android.localmediaprovider.Constant.NO_LIMIT
 import com.rosberry.android.localmediaprovider.sort.SortingMode
 import com.rosberry.android.localmediaprovider.sort.SortingOrder
-import io.reactivex.Observable
-import io.reactivex.Single
-import io.reactivex.subjects.BehaviorSubject
 
 /**
  * @author mmikhailov on 2019-10-31.
  */
 class MediaProvider(private val context: Context) {
 
-    private val mediaUpdateSubject = BehaviorSubject.createDefault(true)
+    private var mediaUpdatesCallback: MediaUpdatesCallback? = null
 
     private var mediaContentObserver: ContentObserver? = null
 
@@ -35,7 +32,7 @@ class MediaProvider(private val context: Context) {
             filterMode: FilterMode = FilterMode.ALL,
             sortingMode: SortingMode = SortingMode.DATE,
             sortingOrder: SortingOrder = SortingOrder.DESCENDING
-    ): Single<List<LocalMedia>> {
+    ): List<LocalMedia> {
 
         val finalFolderId = if (folderId > NO_FOLDER_ID) folderId else NO_FOLDER_ID
         val finalLimit = if (limit > NO_LIMIT) limit else NO_LIMIT
@@ -43,16 +40,17 @@ class MediaProvider(private val context: Context) {
         return queryFromMediaStore(finalFolderId, finalLimit, sortingMode, sortingOrder, filterMode)
     }
 
-    fun listenMediaUpdates(): Observable<Boolean> = mediaUpdateSubject
-        .doOnSubscribe {
-            if (mediaContentObserver == null) {
-                registerListener()
-            }
-        }
-        .doOnDispose { unregisterListener() }
+    fun registerMediaUpdatesCallback(callback: MediaUpdatesCallback) {
+        mediaUpdatesCallback = callback
+        registerListener()
+    }
+
+    fun unregisterMediaUpdatesCallback() {
+        unregisterListener()
+    }
 
     /**
-     * Returns Single of media list refined by query params
+     * Returns list of media refined by query params
      *
      * @param folderId should be {@link MediaProvider.noFolderId} to query all media
      * @param limit should be {@link MediaProvider.noLimit} to query all media
@@ -66,8 +64,7 @@ class MediaProvider(private val context: Context) {
             sortingMode: SortingMode,
             sortingOrder: SortingOrder,
             filterMode: FilterMode
-    ): Single<List<LocalMedia>> {
-
+    ): List<LocalMedia> {
         val query = Query.Builder()
             .uri(MediaStore.Files.getContentUri("external"))
             .selection(filterMode.selection(folderId))
@@ -78,40 +75,17 @@ class MediaProvider(private val context: Context) {
             .limit(limit)
             .build()
 
-        return query.queryResults(context.contentResolver,
-                CursorHandler { LocalMedia(it) })
+        return query.queryResults(context.contentResolver, CursorHandler { LocalMedia(it) })
     }
-
-    private fun <T> Query.queryResults(cr: ContentResolver, ch: CursorHandler<T>): Single<List<T>> =
-            Single.create { emitter ->
-                try {
-                    this.getCursor(cr)
-                        .use { cursor ->
-                            val result = mutableListOf<T>()
-                            if (cursor != null && cursor.count > 0) {
-                                while (cursor.moveToNext()) {
-                                    result.add(ch.handle(cursor))
-                                }
-                            }
-
-                            emitter.onSuccess(result)
-                        }
-                } catch (err: Exception) {
-                    emitter.onError(err)
-                }
-            }
 
     private fun registerListener() {
         mediaContentObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
-                mediaUpdateSubject.onNext(true)
+                mediaUpdatesCallback?.onChange(selfChange)
             }
         }.also { observer ->
-            context.contentResolver.registerContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI, true,
-                    observer)
-
-            context.contentResolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true,
-                    observer)
+            context.contentResolver.registerContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI, true, observer)
+            context.contentResolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, observer)
         }
     }
 
@@ -119,6 +93,19 @@ class MediaProvider(private val context: Context) {
         mediaContentObserver?.let { observer ->
             context.contentResolver.unregisterContentObserver(observer)
             mediaContentObserver = null
+            mediaUpdatesCallback = null
+        }
+    }
+
+    private fun <T> Query.queryResults(cr: ContentResolver, ch: CursorHandler<T>): List<T> {
+        return getCursor(cr).use { cursor ->
+            val result = mutableListOf<T>()
+            if (cursor != null && cursor.count > 0) {
+                while (cursor.moveToNext()) {
+                    result.add(ch.handle(cursor))
+                }
+            }
+            result
         }
     }
 }
