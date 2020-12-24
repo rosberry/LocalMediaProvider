@@ -44,13 +44,17 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private val adapter by lazy { MediaAdapter(cellWidth) }
 
-    private val callback by lazy { object : MediaUpdatesCallback {
-        override fun onChange(selfChange: Boolean) {
-            
+    private val callback by lazy {
+        object : MediaUpdatesCallback {
+            override fun onChange(selfChange: Boolean) {
+                loadData(filterMode)
+            }
         }
-    } }
+    }
 
     private val mediaProvider: MediaProvider by lazy { MediaProvider(this) }
+
+    private var filterMode: FilterMode = FilterMode.ALL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +62,7 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
         listMedia.layoutManager = GridLayoutManager(this, spanCount, GridLayoutManager.VERTICAL, false)
         listMedia.adapter = adapter
         if (savedInstanceState == null) {
-            loadData()
+            loadData(filterMode)
         }
     }
 
@@ -69,7 +73,7 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == readStoragePermissionCode && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            loadData()
+            loadData(filterMode)
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
@@ -87,11 +91,12 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
             }
 
             override fun onTabSelected(tab: TabLayout.Tab) {
-                when (tab.text) {
-                    "ALL" -> loadData()
-                    "IMAGE" -> loadData(filterMode = FilterMode.IMAGES)
-                    "VIDEO" -> loadData(filterMode = FilterMode.VIDEO)
+                filterMode = when (tab.text) {
+                    "IMAGE" -> FilterMode.IMAGES
+                    "VIDEO" -> FilterMode.VIDEO
+                    else -> FilterMode.ALL
                 }
+                loadData(filterMode)
             }
         })
     }
@@ -104,13 +109,19 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
                 .doOnSubscribe { mediaProvider.registerMediaUpdatesCallback(callback) }
                 .doOnDispose { mediaProvider.unregisterMediaUpdatesCallback() }
                 .subscribe(
-                        { mediaList -> adapter.showItems(mediaList) },
+                        { mediaList -> onDataLoaded(mediaList) },
                         { error -> error.printStackTrace() }
                 )
                 .connect()
         } else {
             ActivityCompat.requestPermissions(this, readStoragePermission, readStoragePermissionCode)
         }
+    }
+
+    private fun onDataLoaded(media: List<LocalMedia>) {
+        val state = listMedia.layoutManager?.onSaveInstanceState()
+        adapter.showItems(media)
+        listMedia.layoutManager?.onRestoreInstanceState(state)
     }
 
     private fun Disposable.connect() = disposable.add(this)
