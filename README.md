@@ -13,34 +13,37 @@ implementation "com.rosberry.android.localmediaprovider:$localprovider_version"
 ### Query files
 
 ```kotlin
-val disposable = MediaProvider(context).getLocalMedia(
+val mediaList = MediaProvider(context).getLocalMedia(
     folderId = NO_FOLDER_ID,
     limit = NO_LIMIT,
     filterMode = FilterMode.ALL,
     sortingMode = SortingMode.DATE,
     sortingOrder = SortingOrder.DESCENDING
 )
-    .subscribeOn(Schedulers.io())
-    .observeOn(AndroidSchedulers.mainThread())
-    .subscribe { mediaList: List<LocalMedia> -> //work with data }
 ```
 
-To query files use the `getLocalMedia` method, which return a `Single<List<LocalMedia>>`. By an arguments you can customize your query:
+Use `getLocalMedia` method to query files, which return a list of `LocalMedia`. You can customize your query with arguments:
 
  - folderId - id of the folder in which to query (default is `NO_FOLDER_ID`)
  - limit - limit of the query (default is `NO_LIMIT`)
- - filterMode - can be `ALL`, `VIDEO` or `IMAGE`
- - sortingMode - can be `NAME`, `DATE`, `SIZE`, `TYPE` or `NUMERIC`
- - sortingOrder - can be `ASCENDING` or `DESCENDING`
+ - filterMode - can be `ALL`, `VIDEO` or `IMAGE` (default is `ALL`)
+ - sortingMode - can be `NAME`, `DATE`, `SIZE`, `TYPE` or `NUMERIC` (default is `DATE`)
+ - sortingOrder - can be `ASCENDING` or `DESCENDING` (default is `DESCENDING`)
  
- ### Listen media updates
- 
+### Listen media updates
+  
  ```kotlin
- val disposable = MediaProvider(context).listenMediaUpdates()
-     .subscribe { isUpdated: Boolean -> //do what you need when media was updated. }
+ interface MediaUpdatesCallback {
+     fun onChange(selfChange: Boolean)
+ }
  ```
+Register callback with `MediaProvider.registerMediaUpdatesCallback`.
+`MediaUpdatesCallback.onChange` method will be invoked whenever content change occurs.
+Don't forget to unregister callback with `MediaProvider.unregisterMediaCallback` when it isn't using.
+
+
 ⚠️ **Attention** 
-`Observable` from `listenMediaUpdates` is publishing the events on the main thread.
+`MediaUpdateCallback` is publishing the events on the main thread.
 
 ## License
 
