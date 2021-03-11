@@ -15,7 +15,10 @@ import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.tabs.TabLayout
 import com.rosberry.android.localmediaprovider.FilterMode
+import com.rosberry.android.localmediaprovider.LocalMedia
 import com.rosberry.android.localmediaprovider.MediaProvider
+import com.rosberry.android.localmediaprovider.MediaUpdatesCallback
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
@@ -41,9 +44,17 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private val adapter by lazy { MediaAdapter(cellWidth) }
 
-    private val mediaProvider: MediaProvider by lazy {
-        MediaProvider(this)
+    private val callback by lazy {
+        object : MediaUpdatesCallback {
+            override fun onChange(selfChange: Boolean) {
+                loadData(filterMode)
+            }
+        }
     }
+
+    private val mediaProvider: MediaProvider by lazy { MediaProvider(this) }
+
+    private var filterMode: FilterMode = FilterMode.ALL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +62,7 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
         listMedia.layoutManager = GridLayoutManager(this, spanCount, GridLayoutManager.VERTICAL, false)
         listMedia.adapter = adapter
         if (savedInstanceState == null) {
-            loadData()
+            loadData(filterMode)
         }
     }
 
@@ -62,7 +73,7 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == readStoragePermissionCode && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            loadData()
+            loadData(filterMode)
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
@@ -80,28 +91,37 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
             }
 
             override fun onTabSelected(tab: TabLayout.Tab) {
-                when (tab.text) {
-                    "ALL" -> loadData()
-                    "IMAGE" -> loadData(filterMode = FilterMode.IMAGES)
-                    "VIDEO" -> loadData(filterMode = FilterMode.VIDEO)
+                filterMode = when (tab.text) {
+                    "IMAGE" -> FilterMode.IMAGES
+                    "VIDEO" -> FilterMode.VIDEO
+                    else -> FilterMode.ALL
                 }
+                loadData(filterMode)
             }
         })
     }
 
     private fun loadData(filterMode: FilterMode = FilterMode.ALL) {
         if (isReadStoragePermissionsGranted()) {
-            mediaProvider.getLocalMedia(filterMode = filterMode)
+            Single.fromCallable<List<LocalMedia>> { mediaProvider.getLocalMedia(filterMode = filterMode) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe { mediaProvider.registerMediaUpdatesCallback(callback) }
+                .doOnDispose { mediaProvider.unregisterMediaUpdatesCallback() }
                 .subscribe(
-                        { mediaList -> adapter.showItems(mediaList) },
+                        { mediaList -> onDataLoaded(mediaList) },
                         { error -> error.printStackTrace() }
                 )
                 .connect()
         } else {
             ActivityCompat.requestPermissions(this, readStoragePermission, readStoragePermissionCode)
         }
+    }
+
+    private fun onDataLoaded(media: List<LocalMedia>) {
+        val state = listMedia.layoutManager?.onSaveInstanceState()
+        adapter.showItems(media)
+        listMedia.layoutManager?.onRestoreInstanceState(state)
     }
 
     private fun Disposable.connect() = disposable.add(this)

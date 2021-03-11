@@ -17,13 +17,13 @@ import androidx.annotation.NonNull;
 
 class Query {
 
-    private Uri uri;
-    private String[] projection;
-    private String selection;
-    private String[] args;
-    private String sort;
-    private boolean ascending;
-    private int limit;
+    private final Uri uri;
+    private final String[] projection;
+    private final String selection;
+    private final String[] args;
+    private final String sort;
+    private final boolean ascending;
+    private final int limit;
 
     private Query(Builder builder) {
         uri = builder.uri;
