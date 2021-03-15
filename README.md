@@ -1,17 +1,17 @@
-# Local Media Provider (by Rosberry)
-
+# Local Media Provider
 The library is providing an easy way to fetch media files (photo and video) from media storage.
+
+## Requirements
+Android API 21+
 
 ## Usage
 
-### Add a dependency
-
+Add a dependency:
 ```groovy
-implementation "com.rosberry.android.localmediaprovider:$localprovider_version"
+implementation 'com.rosberry.android:LocalMediaProvider:0.1.0'
 ```
 
 ### Query files
-
 ```kotlin
 val mediaList = MediaProvider(context).getLocalMedia(
     folderId = NO_FOLDER_ID,
@@ -23,7 +23,6 @@ val mediaList = MediaProvider(context).getLocalMedia(
 ```
 
 Use `getLocalMedia` method to query files, which return a list of `LocalMedia`. You can customize your query with arguments:
-
  - folderId - id of the folder in which to query (default is `NO_FOLDER_ID`)
  - limit - limit of the query (default is `NO_LIMIT`)
  - filterMode - can be `ALL`, `VIDEO` or `IMAGE` (default is `ALL`)
@@ -31,7 +30,6 @@ Use `getLocalMedia` method to query files, which return a list of `LocalMedia`. 
  - sortingOrder - can be `ASCENDING` or `DESCENDING` (default is `DESCENDING`)
  
 ### Listen media updates
-  
  ```kotlin
  interface MediaUpdatesCallback {
      fun onChange(selfChange: Boolean)
@@ -45,23 +43,14 @@ Don't forget to unregister callback with `MediaProvider.unregisterMediaCallback`
 ⚠️ **Attention** 
 `MediaUpdateCallback` is publishing the events on the main thread.
 
+## About
+
+<img src="https://github.com/rosberry/Foundation/blob/master/Assets/full_logo.png?raw=true" height="100" />
+
+This project is owned and maintained by [Rosberry](http://rosberry.com). We build mobile apps for users worldwide 🌏.
+
+Check out our [open source projects](https://github.com/rosberry), read [our blog](https://medium.com/@Rosberry) or give us a high-five on 🐦 [@rosberryapps](http://twitter.com/RosberryApps).
+
 ## License
 
-```
-Copyright 2020 Rosberry.
-
-Licensed to the Apache Software Foundation (ASF) under one or more contributor
-license agreements. See the NOTICE file distributed with this work for
-additional information regarding copyright ownership. The ASF licenses this
-file to you under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of
-the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-License for the specific language governing permissions and limitations under
-the License.
-```
+Image Cropper is available under the Apache License 2.0. See the LICENSE file for more info.
