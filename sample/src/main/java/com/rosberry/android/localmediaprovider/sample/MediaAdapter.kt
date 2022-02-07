@@ -6,13 +6,13 @@
 
 package com.rosberry.android.localmediaprovider.sample
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.rosberry.android.localmediaprovider.LocalMedia
 import kotlinx.android.synthetic.main.i_media.view.*
 
@@ -47,11 +47,15 @@ class MediaAdapter(private val maxWidth: Int) : RecyclerView.Adapter<MediaViewHo
 class MediaViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
     fun bind(item: LocalMedia) {
-        itemView.textType.text = item.mimeType
-        if (item.mimeType == "image/jpeg") {
-            itemView.imageMedia.setImageURI(item.uri)
-        } else {
-            itemView.imageMedia.setBackgroundColor(Color.DKGRAY)
+        itemView.run {
+            itemView.textType.text = item.mimeType
+            if (item.mimeType.startsWith("image/")) {
+                Glide.with(imageMedia)
+                    .load(item.uri)
+                    .into(imageMedia)
+            } else {
+                imageMedia.setImageDrawable(null)
+            }
         }
     }
 }

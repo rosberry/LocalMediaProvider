@@ -7,11 +7,13 @@
 package com.rosberry.android.localmediaprovider.sample
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.tabs.TabLayout
 import com.rosberry.android.localmediaprovider.FilterMode
@@ -38,7 +40,7 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private val disposable = CompositeDisposable()
 
-    private val spanCount = 3
+    private val spanCount = 1
 
     private val cellWidth by lazy { resources.displayMetrics.widthPixels.div(spanCount) }
 
@@ -103,14 +105,14 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private fun loadData(filterMode: FilterMode = FilterMode.ALL) {
         if (isReadStoragePermissionsGranted()) {
-            Single.fromCallable<List<LocalMedia>> { mediaProvider.getLocalMedia(filterMode = filterMode) }
+            Single.fromCallable { mediaProvider.getLocalMedia(limit = 3, filterMode = filterMode) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnSubscribe { mediaProvider.registerMediaUpdatesCallback(callback) }
                 .doOnDispose { mediaProvider.unregisterMediaUpdatesCallback() }
                 .subscribe(
-                        { mediaList -> onDataLoaded(mediaList) },
-                        { error -> error.printStackTrace() }
+                    { mediaList -> onDataLoaded(mediaList) },
+                    { error -> error.printStackTrace() }
                 )
                 .connect()
         } else {
@@ -125,4 +127,8 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
     }
 
     private fun Disposable.connect() = disposable.add(this)
+
+    private fun Activity.isReadStoragePermissionsGranted(): Boolean =
+        (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED)
 }
