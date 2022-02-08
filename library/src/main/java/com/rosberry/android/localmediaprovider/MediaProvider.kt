@@ -28,16 +28,18 @@ class MediaProvider(private val context: Context) {
 
     fun getLocalMedia(
             folderId: Long = NO_FOLDER_ID,
-            limit: Int = NO_LIMIT,
+            limit: Int? = null,
             filterMode: FilterMode = FilterMode.ALL,
             sortingMode: SortingMode = SortingMode.DATE,
             sortingOrder: SortingOrder = SortingOrder.DESCENDING
     ): List<LocalMedia> {
-
-        val finalFolderId = if (folderId > NO_FOLDER_ID) folderId else NO_FOLDER_ID
-        val finalLimit = if (limit > NO_LIMIT) limit else NO_LIMIT
-
-        return queryFromMediaStore(finalFolderId, finalLimit, sortingMode, sortingOrder, filterMode)
+        return queryFromMediaStore(
+            if (folderId > NO_FOLDER_ID) folderId else NO_FOLDER_ID,
+            limit,
+            filterMode,
+            sortingMode,
+            sortingOrder
+        )
     }
 
     fun registerMediaUpdatesCallback(callback: MediaUpdatesCallback) {
@@ -60,22 +62,22 @@ class MediaProvider(private val context: Context) {
      * */
     private fun queryFromMediaStore(
             folderId: Long,
-            limit: Int,
+            limit: Int?,
+            filterMode: FilterMode,
             sortingMode: SortingMode,
-            sortingOrder: SortingOrder,
-            filterMode: FilterMode
+            sortingOrder: SortingOrder
     ): List<LocalMedia> {
-        val query = Query.Builder()
-            .uri(MediaStore.Files.getContentUri("external"))
-            .selection(filterMode.selection(folderId))
-            .args(*filterMode.args(folderId))
-            .projection(LocalMedia.projection)
-            .sort(sortingMode.mediaColumn)
-            .ascending(sortingOrder.isAscending)
-            .limit(limit)
-            .build()
+        val query = Query(
+            MediaStore.Files.getContentUri("external"),
+            LocalMedia.projection,
+            filterMode.selection(folderId),
+            filterMode.args(folderId).map { arg -> arg.toString() }.toTypedArray(),
+            sortingMode.mediaColumn,
+            sortingOrder.isAscending,
+            limit
+        )
 
-        return query.queryResults(context.contentResolver, CursorHandler { LocalMedia(it) })
+        return query.queryResults(context.contentResolver) { cursor -> LocalMedia(cursor) }
     }
 
     private fun registerListener() {
@@ -84,8 +86,10 @@ class MediaProvider(private val context: Context) {
                 mediaUpdatesCallback?.onChange(selfChange)
             }
         }.also { observer ->
-            context.contentResolver.registerContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI, true, observer)
-            context.contentResolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, observer)
+            context.contentResolver.run {
+                registerContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI, true, observer)
+                registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, observer)
+            }
         }
     }
 
@@ -97,12 +101,12 @@ class MediaProvider(private val context: Context) {
         }
     }
 
-    private fun <T> Query.queryResults(cr: ContentResolver, ch: CursorHandler<T>): List<T> {
-        return getCursor(cr).use { cursor ->
+    private fun <T> Query.queryResults(contentResolver: ContentResolver, cursorHandler: CursorHandler<T>): List<T> {
+        return getCursor(contentResolver).use { cursor ->
             val result = mutableListOf<T>()
             if (cursor != null && cursor.count > 0) {
                 while (cursor.moveToNext()) {
-                    result.add(ch.handle(cursor))
+                    result.add(cursorHandler.handle(cursor))
                 }
             }
             result

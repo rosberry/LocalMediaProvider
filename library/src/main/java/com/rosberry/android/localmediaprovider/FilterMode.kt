@@ -11,27 +11,33 @@ enum class FilterMode {
 
         override fun args(folderId: Long): Array<Any> {
             return if (folderId.isValid()) {
-                arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE,
-                        MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO,
-                        folderId)
+                arrayOf(
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE,
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO,
+                    folderId
+                )
             } else {
                 arrayOf(
-                        MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE,
-                        MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE,
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
                 )
             }
         }
 
         override fun selection(folderId: Long): String {
             return if (folderId.isValid()) {
-                String.format("(%s=? or %s=?) and %s=?",
-                        MediaStore.Files.FileColumns.MEDIA_TYPE,
-                        MediaStore.Files.FileColumns.MEDIA_TYPE,
-                        MediaStore.Files.FileColumns.PARENT)
+                String.format(
+                    "(%s=? or %s=?) and %s=?",
+                    MediaStore.Files.FileColumns.MEDIA_TYPE,
+                    MediaStore.Files.FileColumns.MEDIA_TYPE,
+                    MediaStore.Files.FileColumns.PARENT
+                )
             } else {
-                String.format("%s=? or %s=?",
-                        MediaStore.Files.FileColumns.MEDIA_TYPE,
-                        MediaStore.Files.FileColumns.MEDIA_TYPE)
+                String.format(
+                    "%s=? or %s=?",
+                    MediaStore.Files.FileColumns.MEDIA_TYPE,
+                    MediaStore.Files.FileColumns.MEDIA_TYPE
+                )
             }
         }
     },
@@ -62,9 +68,11 @@ enum class FilterMode {
 
     open fun selection(folderId: Long): String {
         return if (folderId.isValid()) {
-            String.format("%s=? and %s=?",
-                    MediaStore.Files.FileColumns.MEDIA_TYPE,
-                    MediaStore.Files.FileColumns.PARENT)
+            String.format(
+                "%s=? and %s=?",
+                MediaStore.Files.FileColumns.MEDIA_TYPE,
+                MediaStore.Files.FileColumns.PARENT
+            )
         } else {
             String.format("%s=?", MediaStore.Files.FileColumns.MEDIA_TYPE)
         }
