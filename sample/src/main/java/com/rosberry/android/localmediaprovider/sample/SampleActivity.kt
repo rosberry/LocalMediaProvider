@@ -40,11 +40,9 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private val disposable = CompositeDisposable()
 
-    private val spanCount = 1
+    private val spanCount = 3
 
-    private val cellWidth by lazy { resources.displayMetrics.widthPixels.div(spanCount) }
-
-    private val adapter by lazy { MediaAdapter(cellWidth) }
+    private val adapter by lazy { MediaAdapter() }
 
     private val callback by lazy {
         object : MediaUpdatesCallback {
@@ -105,7 +103,7 @@ class SampleActivity : AppCompatActivity(R.layout.a_main) {
 
     private fun loadData(filterMode: FilterMode = FilterMode.ALL) {
         if (isReadStoragePermissionsGranted()) {
-            Single.fromCallable { mediaProvider.getLocalMedia(limit = 3, filterMode = filterMode) }
+            Single.fromCallable { mediaProvider.getLocalMedia(filterMode = filterMode) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnSubscribe { mediaProvider.registerMediaUpdatesCallback(callback) }
